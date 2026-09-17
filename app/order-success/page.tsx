@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Success(){return <main className="success"><div className="card"><span className="ok">✓</span><h1>تم استلام طلبك تجريبياً 🎉</h1><p>هذه صفحة تأكيد Candidate 01. لم يتم إرسال أي طلب حقيقي بعد.</p><p className="note">رقم الطلب سيظهر هنا بعد ربط الـ Backend.</p><Link className="btn" href="/">العودة للصفحة الرئيسية</Link></div></main>}
