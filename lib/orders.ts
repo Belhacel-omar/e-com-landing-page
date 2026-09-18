@@ -1,5 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
 import { BAC_TRACKS, DELIVERY_TYPES, ORDER_CONFIG } from "./order-config";
+import locationData from "../data/algeria-locations-2026.json";
+
+const WILAYA_COMMUNES = new Map(
+  locationData.wilayas.map((wilaya) => [wilaya.nameAr, new Set(wilaya.communes.map((commune) => commune.nameAr))]),
+);
 
 export type ValidatedOrder = {
   fullName: string; phone: string; track: string; wilaya: string; commune: string;
@@ -35,6 +40,9 @@ export function validateOrderPayload(body: unknown): { ok: true; value: Validate
   if (!(BAC_TRACKS as readonly string[]).includes(track)) return { ok: false, error: "INVALID_TRACK" };
   if (!wilaya) return { ok: false, error: "WILAYA_REQUIRED" };
   if (!commune) return { ok: false, error: "COMMUNE_REQUIRED" };
+  const communes = WILAYA_COMMUNES.get(wilaya);
+  if (!communes) return { ok: false, error: "INVALID_WILAYA" };
+  if (!communes.has(commune)) return { ok: false, error: "INVALID_COMMUNE_FOR_WILAYA" };
   if (!(DELIVERY_TYPES as readonly string[]).includes(deliveryType)) return { ok: false, error: "INVALID_DELIVERY_TYPE" };
   return { ok: true, value: {
     fullName, phone, track, wilaya, commune, deliveryType,
