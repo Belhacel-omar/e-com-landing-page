@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { appendOrderRow } from "../../../lib/google-sheets";
 import { commercialValues, createOrderId, duplicateKey, validateOrderPayload } from "../../../lib/orders";
 import { ORDER_CONFIG } from "../../../lib/order-config";
+import {
+  createOrderConfirmation,
+  ORDER_CONFIRMATION_COOKIE,
+  ORDER_CONFIRMATION_MAX_AGE_SECONDS,
+} from "../../../lib/order-confirmation";
 
 export const runtime = "nodejs";
 
@@ -51,7 +56,24 @@ export async function POST(request: Request) {
       return json({ success: false, error: "ORDER_PERSISTENCE_FAILED" }, 503);
     }
 
-    return json({ success: true, orderId }, 201);
+    let confirmation: string;
+    try {
+      confirmation = createOrderConfirmation(orderId);
+    } catch {
+      return json({ success: false, error: "ORDER_CONFIRMATION_UNAVAILABLE" }, 503);
+    }
+
+    const response = json({ success: true, orderId }, 201);
+    response.cookies.set({
+      name: ORDER_CONFIRMATION_COOKIE,
+      value: confirmation,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/order-success",
+      maxAge: ORDER_CONFIRMATION_MAX_AGE_SECONDS,
+    });
+    return response;
   } catch {
     return json({ success: false, error: "INTERNAL_SERVER_ERROR" }, 500);
   }

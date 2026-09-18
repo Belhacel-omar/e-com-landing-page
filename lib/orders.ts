@@ -8,6 +8,7 @@ export type ValidatedOrder = {
 };
 
 const MAX = { fullName: 120, phone: 32, track: 64, wilaya: 80, commune: 120, deliveryType: 32, utm: 200 };
+const ORDER_ID_PATTERN = /^BAC-2027-[0-9A-Z]+-[0-9A-F]{8}$/;
 const clean = (v: unknown, max: number) =>
   typeof v === "string" ? v.trim().replace(/[\u0000-\u001F\u007F]/g, "").slice(0, max) : "";
 
@@ -45,6 +46,10 @@ export function validateOrderPayload(body: unknown): { ok: true; value: Validate
 
 export function createOrderId() {
   return `BAC-2027-${Date.now().toString(36).toUpperCase()}-${randomBytes(4).toString("hex").toUpperCase()}`;
+}
+
+export function isValidOrderId(value: unknown): value is string {
+  return typeof value === "string" && ORDER_ID_PATTERN.test(value);
 }
 
 export function duplicateKey(order: ValidatedOrder) {
